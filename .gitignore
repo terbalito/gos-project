@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.env  
+.pem  
+.vscode/
+.DS_Store
+coverage/   
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+.idea/
+*.iml
+
+# MacOS files
+*.DS_Store
