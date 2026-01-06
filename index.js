@@ -2,6 +2,15 @@ const express = require("express");
 const app = express();
 const port = 3000;
 
+// Root
+app.get("/", (req, res) => {
+  res.send({
+    name: "GOS API",
+    status: "running",
+    endpoints: ["/health", "/pay"]
+  });
+});
+
 // Health check
 app.get("/health", (req, res) => {
   console.log("Health check requested");
@@ -15,4 +24,6 @@ app.get("/pay", (req, res) => {
   res.send({ usage, cost: usage * 0.05 });
 });
 
-app.listen(port, () => console.log(`API GOS running on port ${port}`));
+app.listen(port, () =>
+  console.log(`API GOS running on port ${port}`)
+);
