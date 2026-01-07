@@ -5,26 +5,27 @@ const path = require("path");
 const app = express();
 const PORT = 4000;
 
+// 🔹 Servir les fichiers statiques proprement
 app.use(express.static(path.join(__dirname, "public")));
 
-
+// 🔹 Route racine explicite
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
-
 
 const PROMETHEUS_URL = "http://localhost:9090/api/v1/query";
 
 async function checkApiDown() {
   const query = 'up{job="gos-api"}';
   const res = await axios.get(PROMETHEUS_URL, {
-    params: { query }
+    params: { query },
   });
 
   const value = res.data.data.result[0]?.value[1];
   return value === "0";
 }
 
+// 🔹 Endpoint incident
 app.get("/incident", async (req, res) => {
   try {
     const apiDown = await checkApiDown();
@@ -37,8 +38,8 @@ app.get("/incident", async (req, res) => {
           "Vérifier l’état du container Docker",
           "Redémarrer le service",
           "Vérifier CPU / RAM",
-          "Confirmer le retour à la normale"
-        ]
+          "Confirmer le retour à la normale",
+        ],
       });
     } else {
       res.json({ incident: null });
@@ -49,5 +50,5 @@ app.get("/incident", async (req, res) => {
 });
 
 app.listen(PORT, () =>
-  console.log(`Incident dashboard running on ${PORT}`)
+  console.log(`🚨 Incident dashboard running on port ${PORT}`)
 );
