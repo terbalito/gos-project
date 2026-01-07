@@ -5,7 +5,13 @@ const path = require("path");
 const app = express();
 const PORT = 4000;
 
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "public")));
+
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
 
 const PROMETHEUS_URL = "http://localhost:9090/api/v1/query";
 
