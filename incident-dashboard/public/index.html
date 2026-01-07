@@ -1,55 +1,39 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <title>Incident Dashboard</title>
-  <style>
-    body {
-      font-family: Arial;
-      background: #0f172a;
-      color: white;
-      padding: 40px;
-    }
-    .card {
-      background: #1e293b;
-      padding: 20px;
-      border-radius: 10px;
-      max-width: 500px;
-    }
-    .p1 {
-      color: #ef4444;
-      font-weight: bold;
-    }
-  </style>
-</head>
-<body>
+<h1>Monitoring Incident</h1>
+<div id="incident"></div>
+<button id="generate-pdf" style="display:none">Générer PDF</button>
 
-  <div class="card">
-    <h2>Monitoring Incident</h2>
-    <div id="result">Chargement...</div>
-  </div>
+<script>
+async function fetchIncident() {
+  const res = await fetch("/incident");
+  const data = await res.json();
+  const incidentDiv = document.getElementById("incident");
+  const pdfBtn = document.getElementById("generate-pdf");
 
-  <script>
-    fetch("/incident")
-      .then(res => res.json())
-      .then(data => {
-        const div = document.getElementById("result");
+  if(data.incident) {
+    incidentDiv.innerHTML = `
+      <h2>${data.incident} (${data.severity})</h2>
+      <ul>
+        ${data.actions.map(a => `<li>${a} <button onclick="runAction('${a}')">Exécuter</button></li>`).join("")}
+      </ul>
+    `;
+    pdfBtn.style.display = "inline-block";
+  } else {
+    incidentDiv.innerHTML = "<p>Tout est OK ✅</p>";
+    pdfBtn.style.display = "none";
+  }
+}
 
-        if (!data.incident) {
-          div.innerHTML = "✅ Aucun incident détecté";
-        } else {
-          div.innerHTML = `
-            <p class="p1">${data.incident} (${data.severity})</p>
-            <ul>
-              ${data.actions.map(a => `<li>${a}</li>`).join("")}
-            </ul>
-          `;
-        }
-      })
-      .catch(() => {
-        document.getElementById("result").innerText = "Erreur monitoring";
-      });
-  </script>
+// Simuler l’exécution d’une action
+function runAction(action) {
+  alert(`Tu peux exécuter la commande correspondante à : ${action}`);
+}
 
-</body>
-</html>
+// Actualiser toutes les 10 secondes
+setInterval(fetchIncident, 10000);
+fetchIncident();
+
+// Bouton PDF
+document.getElementById("generate-pdf").onclick = async () => {
+  window.open("/generate-pdf");
+}
+</script>

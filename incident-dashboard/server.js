@@ -15,6 +15,16 @@ app.get("/", (req, res) => {
 
 const PROMETHEUS_URL = "http://localhost:9090/api/v1/query";
 
+const { exec } = require("child_process");
+app.get("/generate-pdf", (req, res) => {
+  // Appelle le script Python qui génère le PDF
+  exec("python3 incident_report/generate_report.py", (err, stdout, stderr) => {
+    if(err) return res.status(500).send("Erreur génération PDF");
+    res.download("incident_report/output.pdf"); // envoyer le PDF au navigateur
+  });
+});
+
+
 async function checkApiDown() {
   const query = 'up{job="gos-api"}';
   const res = await axios.get(PROMETHEUS_URL, {
