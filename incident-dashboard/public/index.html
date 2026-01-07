@@ -1,47 +1,55 @@
-const express = require("express");
-const axios = require("axios");
-const path = require("path");
-
-const app = express();
-const PORT = 4000;
-
-app.use(express.static("public"));
-
-const PROMETHEUS_URL = "http://localhost:9090/api/v1/query";
-
-async function checkApiDown() {
-  const query = 'up{job="gos-api"}';
-  const res = await axios.get(PROMETHEUS_URL, {
-    params: { query }
-  });
-
-  const value = res.data.data.result[0]?.value[1];
-  return value === "0";
-}
-
-app.get("/incident", async (req, res) => {
-  try {
-    const apiDown = await checkApiDown();
-
-    if (apiDown) {
-      res.json({
-        incident: "API DOWN",
-        severity: "P1",
-        actions: [
-          "Vérifier l’état du container Docker",
-          "Redémarrer le service",
-          "Vérifier CPU / RAM",
-          "Confirmer le retour à la normale"
-        ]
-      });
-    } else {
-      res.json({ incident: null });
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Incident Dashboard</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #0f172a;
+      color: white;
+      padding: 40px;
     }
-  } catch (err) {
-    res.status(500).json({ error: "Monitoring error" });
-  }
-});
+    .card {
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 500px;
+    }
+    .p1 {
+      color: #ef4444;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
 
-app.listen(PORT, () =>
-  console.log(`Incident dashboard running on ${PORT}`)
-);
+  <div class="card">
+    <h2>Monitoring Incident</h2>
+    <div id="result">Chargement...</div>
+  </div>
+
+  <script>
+    fetch("/incident")
+      .then(res => res.json())
+      .then(data => {
+        const div = document.getElementById("result");
+
+        if (!data.incident) {
+          div.innerHTML = "✅ Aucun incident détecté";
+        } else {
+          div.innerHTML = `
+            <p class="p1">${data.incident} (${data.severity})</p>
+            <ul>
+              ${data.actions.map(a => `<li>${a}</li>`).join("")}
+            </ul>
+          `;
+        }
+      })
+      .catch(() => {
+        document.getElementById("result").innerText = "Erreur monitoring";
+      });
+  </script>
+
+</body>
+</html>
