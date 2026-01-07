@@ -1,0 +1,18 @@
+<h1>{{ incident.title }}</h1>
+<p>Date : {{ incident.date }}</p>
+
+<h2>Résumé</h2>
+<p>Incident critique détecté automatiquement.</p>
+
+<h2>Durée</h2>
+<p>{{ incident.duration }}</p>
+
+<h2>Impact business</h2>
+<p>{{ incident.impact }}</p>
+
+<h2>Actions correctives</h2>
+<ul>
+{% for action in incident.actions %}
+  <li>{{ action }}</li>
+{% endfor %}
+</ul>
