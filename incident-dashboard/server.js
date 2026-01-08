@@ -24,14 +24,15 @@ async function checkApiDown() {
   try {
     const query = 'up{job="gos-api"}';
     const res = await axios.get(PROMETHEUS_URL, { params: { query } });
-    const value = res.data.data.result[0]?.value?.[1];
-    console.log("Valeur API UP:", value);
+    const result = res.data.data.result[0];
+    if (!result) return true; // Pas de données = API down
+    const value = result.value[1];
     return value === "0";
   } catch (err) {
-    console.error("Erreur checkApiDown:", err.message);
-    return false; // Aucun incident si query échoue
+    return true; // Si Prometheus est injoignable = on considère incident
   }
 }
+
 
 // Endpoint pour le dashboard
 app.get("/incident", async (req, res) => {
