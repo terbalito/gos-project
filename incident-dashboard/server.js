@@ -5,7 +5,14 @@ const { exec } = require("child_process");
 
 const app = express();
 const PORT = 4000;
-app.use(express.static("public"));
+
+// Servir les fichiers statiques depuis public
+app.use(express.static(path.join(__dirname, "public")));
+
+// Pour s'assurer que '/' renvoie l'index.html
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
 const PROMETHEUS_URL = "http://localhost:9090/api/v1/query";
 
@@ -43,21 +50,24 @@ app.get("/incident", async (req, res) => {
         incident: "API DOWN",
         severity: "P1",
         actions: Object.keys(commands),
-        commands
+        commands,
+        showPdfButton: false // PDF seulement après résolution
       });
     } else {
+      let duration = null;
       if (incidentStartTime) {
-        const durationSec = Math.round((new Date() - incidentStartTime) / 1000);
+        duration = Math.round((new Date() - incidentStartTime) / 1000);
         incidentStartTime = null;
       }
-      res.json({ incident: null });
+      res.json({ incident: null, showPdfButton: true, duration });
     }
   } catch (err) {
     res.json({
       incident: "API DOWN",
       severity: "P1",
       actions: Object.keys(commands),
-      commands
+      commands,
+      showPdfButton: false
     });
   }
 });
