@@ -16,66 +16,49 @@
       border-radius: 10px;
       max-width: 600px;
     }
-    .p1 {
-      color: #ef4444;
-      font-weight: bold;
-    }
-    button {
-      margin-top: 10px;
-      padding: 8px 12px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      background-color: #3b82f6;
-      color: white;
-    }
-    li {
-      margin-bottom: 6px;
-    }
+    .p1 { color: #ef4444; font-weight: bold; }
+    button { margin-top: 20px; padding: 10px 20px; border:none; border-radius:5px; background:#3b82f6; color:white; cursor:pointer; }
   </style>
 </head>
 <body>
-
   <div class="card">
     <h2>Monitoring Incident</h2>
     <div id="result">Chargement...</div>
-    <button id="generate-pdf" style="display:none">Générer PDF</button>
+    <button id="pdfBtn" style="display:none">Générer PDF</button>
   </div>
 
   <script>
     async function fetchIncident() {
-      const res = await fetch("/incident");
-      const data = await res.json();
-      const div = document.getElementById("result");
-      const pdfBtn = document.getElementById("generate-pdf");
+      try {
+        const res = await fetch("/incident");
+        const data = await res.json();
+        const div = document.getElementById("result");
+        const pdfBtn = document.getElementById("pdfBtn");
 
-      if(!data.incident) {
-        div.innerHTML = "✅ Aucun incident détecté";
-        pdfBtn.style.display = "none";
-      } else {
-        div.innerHTML = `
-          <p class="p1">${data.incident} (${data.severity})</p>
-          <ul>
-            ${data.actions.map(a => `
-              <li>
-                ${a} 
-                <br><small>Commande suggérée : <code>${data.commands[a] || "N/A"}</code></small>
-              </li>
-            `).join("")}
-          </ul>
-        `;
-        pdfBtn.style.display = "inline-block";
+        if (!data.incident) {
+          div.innerHTML = "✅ Aucun incident détecté";
+          pdfBtn.style.display = "none";
+        } else {
+          div.innerHTML = `
+            <p class="p1">${data.incident} (${data.severity})</p>
+            <ul>
+              ${data.actions.map(a => `<li>${a} → <code>${data.commands[a]}</code></li>`).join("")}
+            </ul>
+          `;
+          pdfBtn.style.display = "block";
+        }
+      } catch {
+        document.getElementById("result").innerText = "Erreur monitoring";
       }
     }
 
-    setInterval(fetchIncident, 10000);
+    document.getElementById("pdfBtn").addEventListener("click", () => {
+      window.location.href = "/generate-pdf";
+    });
+
+    // Rafraîchissement automatique toutes les 5 secondes
     fetchIncident();
-
-    // Bouton PDF
-    document.getElementById("generate-pdf").onclick = async () => {
-      window.open("/generate-pdf");
-    }
+    setInterval(fetchIncident, 5000);
   </script>
-
 </body>
 </html>
