@@ -17,33 +17,39 @@
     <div id="pdf-button"></div>
   </div>
 
-  <script>
-    async function fetchIncident() {
-      try {
-        const res = await fetch("/incident");
-        const data = await res.json();
-        const div = document.getElementById("result");
-        const pdfDiv = document.getElementById("pdf-button");
+<script>
+function updateIncident() {
+  fetch("/incident")
+    .then(res => res.json())
+    .then(data => {
+      const div = document.getElementById("result");
 
-        if (!data.incident) {
-          div.innerHTML = "✅ Aucun incident détecté";
-          pdfDiv.innerHTML = `<button onclick="window.location='/generate-pdf'">Télécharger le rapport PDF</button>`;
-        } else {
-          div.innerHTML = `
-            <p class="p1">${data.incident} (${data.severity})</p>
-            <ul>
-              ${data.actions.map(a => `<li>${a} - <code>${data.commands[a]}</code></li>`).join("")}
-            </ul>
-          `;
-          pdfDiv.innerHTML = "";
-        }
-      } catch (err) {
-        document.getElementById("result").innerText = "⚠️ Erreur monitoring";
+      if (!data.incident) {
+        div.innerHTML = "✅ Aucun incident détecté";
+      } else {
+        div.innerHTML = `
+          <p class="p1">${data.incident} (${data.severity})</p>
+          <ul>
+            ${data.actions.map(a => `<li>${a} - <code>${data.commands[a]}</code></li>`).join("")}
+          </ul>
+          <button id="pdfBtn">Générer PDF</button>
+        `;
+
+        document.getElementById("pdfBtn").addEventListener("click", () => {
+          window.location.href = "/generate-pdf";
+        });
       }
-    }
+    })
+    .catch(() => {
+      document.getElementById("result").innerText = "⚠️ Erreur monitoring";
+    });
+}
 
-    fetchIncident();
-    setInterval(fetchIncident, 5000); // mise à jour toutes les 5 secondes
-  </script>
+// Actualisation toutes les 5 secondes
+updateIncident();
+setInterval(updateIncident, 5000);
+</script>
+
+
 </body>
 </html>
