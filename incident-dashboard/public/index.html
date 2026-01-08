@@ -11,44 +11,52 @@
   </style>
 </head>
 <body>
-  <div class="card">
-    <h2>Monitoring Incident</h2>
-    <div id="result">Chargement...</div>
-    <div id="pdf-button"></div>
-  </div>
+<div class="card">
+  <h2>Monitoring Incident</h2>
+  <div id="result">Chargement...</div>
+  <button id="downloadBtn" style="display:none;">Télécharger le rapport PDF</button>
+</div>
 
 <script>
-function updateIncident() {
-  fetch("/incident")
-    .then(res => res.json())
-    .then(data => {
-      const div = document.getElementById("result");
+async function fetchIncident() {
+  try {
+    const res = await fetch("/incident");
+    const data = await res.json();
+    const div = document.getElementById("result");
+    const btn = document.getElementById("downloadBtn");
 
-      if (!data.incident) {
-        div.innerHTML = "✅ Aucun incident détecté";
+    if (!data.incident) {
+      div.innerHTML = "✅ Aucun incident détecté";
+      if (data.showPdfButton) {
+        btn.style.display = "block"; // afficher le bouton après résolution
       } else {
-        div.innerHTML = `
-          <p class="p1">${data.incident} (${data.severity})</p>
-          <ul>
-            ${data.actions.map(a => `<li>${a} - <code>${data.commands[a]}</code></li>`).join("")}
-          </ul>
-          <button id="pdfBtn">Générer PDF</button>
-        `;
-
-        document.getElementById("pdfBtn").addEventListener("click", () => {
-          window.location.href = "/generate-pdf";
-        });
+        btn.style.display = "none";
       }
-    })
-    .catch(() => {
-      document.getElementById("result").innerText = "⚠️ Erreur monitoring";
-    });
+    } else {
+      div.innerHTML = `
+        <p class="p1">${data.incident} (${data.severity})</p>
+        <ul>
+          ${data.actions.map(a => `<li>${a} - <code>${data.commands[a]}</code></li>`).join("")}
+        </ul>
+      `;
+      btn.style.display = "none"; // cacher le bouton pendant l'incident
+    }
+  } catch {
+    document.getElementById("result").innerText = "⚠️ Erreur monitoring";
+  }
 }
 
-// Actualisation toutes les 5 secondes
-updateIncident();
-setInterval(updateIncident, 5000);
+// téléchargement PDF
+document.getElementById("downloadBtn").addEventListener("click", () => {
+  window.location.href = "/generate-pdf";
+  document.getElementById("downloadBtn").style.display = "none"; // cacher après clic
+});
+
+// rafraîchissement automatique toutes les 5s
+setInterval(fetchIncident, 5000);
+fetchIncident();
 </script>
+
 
 
 </body>

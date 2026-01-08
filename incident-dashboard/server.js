@@ -72,12 +72,25 @@ app.get("/incident", async (req, res) => {
   }
 });
 
+
 // Endpoint pour générer le PDF
 app.get("/generate-pdf", (req, res) => {
-  exec("python3 incident_report/generate_report.py", (err) => {
-    if (err) return res.status(500).send("Erreur génération PDF");
-    res.download(path.join(__dirname, "incident_report/output.pdf"));
+  const scriptPath = path.join(__dirname, "incident_report", "generate_report.py");
+
+  // Exécute avec l'environnement Python du venv si tu veux
+  const command = `python3 ${scriptPath}`;
+
+  exec(command, (err, stdout, stderr) => {
+    if (err) {
+      console.error("Erreur génération PDF :", stderr || err);
+      return res.status(500).send("Erreur génération PDF");
+    }
+    const pdfPath = path.join(__dirname, "incident_report", "output.pdf");
+    res.download(pdfPath, "incident_report.pdf", (err) => {
+      if (err) console.error("Erreur téléchargement PDF :", err);
+    });
   });
 });
+
 
 app.listen(PORT, () => console.log(`Incident dashboard running on ${PORT}`));
