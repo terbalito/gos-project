@@ -4,78 +4,46 @@
   <meta charset="UTF-8" />
   <title>Incident Dashboard</title>
   <style>
-    body {
-      font-family: Arial;
-      background: #0f172a;
-      color: white;
-      padding: 40px;
-    }
-    .card {
-      background: #1e293b;
-      padding: 20px;
-      border-radius: 10px;
-      max-width: 600px;
-    }
-    .p1 {
-      color: #ef4444;
-      font-weight: bold;
-    }
-    button {
-      margin-top: 15px;
-      padding: 10px 15px;
-      border: none;
-      border-radius: 5px;
-      background: #3b82f6;
-      color: white;
-      cursor: pointer;
-    }
-    button:hover { background: #2563eb; }
+    body { font-family: Arial; background: #0f172a; color: white; padding: 40px; }
+    .card { background: #1e293b; padding: 20px; border-radius: 10px; max-width: 600px; }
+    .p1 { color: #ef4444; font-weight: bold; }
+    button { margin-top: 15px; padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 5px; cursor: pointer; }
   </style>
 </head>
 <body>
-
   <div class="card">
     <h2>Monitoring Incident</h2>
     <div id="result">Chargement...</div>
-    <button id="generatePdf" style="display:none;">📄 Générer rapport PDF</button>
+    <div id="pdf-button"></div>
   </div>
 
   <script>
-    const resultDiv = document.getElementById("result");
-    const pdfBtn = document.getElementById("generatePdf");
-
     async function fetchIncident() {
       try {
         const res = await fetch("/incident");
         const data = await res.json();
+        const div = document.getElementById("result");
+        const pdfDiv = document.getElementById("pdf-button");
 
-        if(!data.incident) {
-          resultDiv.innerHTML = "✅ Aucun incident détecté";
-          pdfBtn.style.display = "inline-block"; // bouton PDF seulement si aucun incident
+        if (!data.incident) {
+          div.innerHTML = "✅ Aucun incident détecté";
+          pdfDiv.innerHTML = `<button onclick="window.location='/generate-pdf'">Télécharger le rapport PDF</button>`;
         } else {
-          resultDiv.innerHTML = `
+          div.innerHTML = `
             <p class="p1">${data.incident} (${data.severity})</p>
             <ul>
-              ${data.actions.map(a => `<li>${a} <code>${data.commands[a] || ""}</code></li>`).join("")}
+              ${data.actions.map(a => `<li>${a} - <code>${data.commands[a]}</code></li>`).join("")}
             </ul>
           `;
-          pdfBtn.style.display = "none";
+          pdfDiv.innerHTML = "";
         }
-      } catch(e) {
-        resultDiv.innerText = "⚠️ Erreur monitoring";
-        pdfBtn.style.display = "none";
+      } catch (err) {
+        document.getElementById("result").innerText = "⚠️ Erreur monitoring";
       }
     }
 
-    // Auto-refresh toutes les 5 secondes
-    setInterval(fetchIncident, 5000);
     fetchIncident();
-
-    // Bouton pour générer PDF
-    pdfBtn.addEventListener("click", () => {
-      window.location.href = "/generate-pdf";
-    });
+    setInterval(fetchIncident, 5000); // mise à jour toutes les 5 secondes
   </script>
-
 </body>
 </html>

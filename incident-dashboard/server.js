@@ -11,7 +11,7 @@ const PROMETHEUS_URL = "http://localhost:9090/api/v1/query";
 
 let incidentStartTime = null;
 
-// Commandes suggérées pour diagnostiquer et réparer
+// Commandes à suggérer
 const commands = {
   "Vérifier l’état du container Docker": "docker ps | grep gos-api",
   "Redémarrer le service": "docker restart gos-api",
@@ -19,27 +19,25 @@ const commands = {
   "Confirmer le retour à la normale": "curl http://localhost:3001/health"
 };
 
-// Vérifie si l'API est down via Prometheus
+// Fonction pour vérifier si l'API est down
 async function checkApiDown() {
   try {
     const query = 'up{job="gos-api"}';
     const res = await axios.get(PROMETHEUS_URL, { params: { query } });
-    const result = res.data.data.result[0];
-    if (!result) return true; // Pas de données = API down
-    const value = result.value[1];
-    return value === "0";
+    const value = res.data.data.result[0]?.value[1];
+    return { success: true, down: value === "0" };
   } catch (err) {
-    return true; // Si Prometheus est injoignable = on considère incident
+    // Si Prometheus ne répond pas, on considère l'API comme down
+    return { success: false, down: true };
   }
 }
 
-
-// Endpoint pour le dashboard
+// Endpoint incident
 app.get("/incident", async (req, res) => {
   try {
-    const apiDown = await checkApiDown();
+    const { down } = await checkApiDown();
 
-    if (apiDown) {
+    if (down) {
       if (!incidentStartTime) incidentStartTime = new Date();
       res.json({
         incident: "API DOWN",
@@ -49,29 +47,27 @@ app.get("/incident", async (req, res) => {
       });
     } else {
       if (incidentStartTime) {
-        // calcul de la durée de l’incident
         const durationSec = Math.round((new Date() - incidentStartTime) / 1000);
-        console.log(`Incident résolu en ${durationSec} sec`);
         incidentStartTime = null;
-        // ici tu pourrais générer automatiquement le PDF si tu veux
       }
       res.json({ incident: null });
     }
   } catch (err) {
-    res.status(500).json({ error: "Monitoring error" });
+    res.json({
+      incident: "API DOWN",
+      severity: "P1",
+      actions: Object.keys(commands),
+      commands
+    });
   }
 });
 
-// Génération PDF
+// Endpoint pour générer le PDF
 app.get("/generate-pdf", (req, res) => {
   exec("python3 incident_report/generate_report.py", (err) => {
-    if (err) {
-      console.error("Erreur PDF:", err.message);
-      return res.status(500).send("Erreur génération PDF");
-    }
+    if (err) return res.status(500).send("Erreur génération PDF");
     res.download(path.join(__dirname, "incident_report/output.pdf"));
   });
 });
 
-// Lancement du serveur
 app.listen(PORT, () => console.log(`Incident dashboard running on ${PORT}`));

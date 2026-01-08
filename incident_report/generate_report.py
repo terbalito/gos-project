@@ -19,7 +19,7 @@ now = datetime.datetime.now()
 incident = {
     "title": "INCIDENT P1 – API DOWN",
     "date": now.strftime("%Y-%m-%d %H:%M"),
-    "duration": "calculée dynamiquement",  # si tu sauvegardes startTime, tu peux calculer ici
+    "duration": "durée calculée automatiquement",  # tu peux brancher startTime côté server
     "impact": f"CPU={cpu}, RAM={mem}, Requêtes /health={http_health}",
     "actions": [
         "Vérification du container Docker",
